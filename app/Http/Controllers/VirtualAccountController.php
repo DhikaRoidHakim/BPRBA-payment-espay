@@ -153,6 +153,7 @@ class VirtualAccountController extends Controller
             $signatureKey = config('espay.signature_key', '');
             $action       = 'SENDINVOICE';
 
+
             $order_id   = $va->order_id;
             $ccy        = $va->ccy ?? 'IDR';
             $comm_code  = $va->comm_code;
