@@ -140,7 +140,6 @@ class VirtualAccountController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // TODO: Testing Update VA Espay
         try {
             $validated = $request->validate([
                 'remark1'    => 'nullable|string|max:255',

@@ -20,7 +20,7 @@
                     :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Main Menu</h3>
             </div>
             <div class="space-y-1">
-                <a href="{{ url('/dashboard') }}"
+                <a href="{{ url('/') }}"
                     class="flex items-center gap-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition overflow-hidden"
                     :class="sidebarOpen ? 'px-3 py-2.5' : 'px-3 py-3 justify-center'">
                     <span class="material-symbols-outlined text-xl flex-shrink-0">dashboard</span>
