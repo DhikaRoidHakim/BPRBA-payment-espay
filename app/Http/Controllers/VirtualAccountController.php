@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use App\Services\ImageService;
 
 class VirtualAccountController extends Controller
 {
@@ -30,6 +31,7 @@ class VirtualAccountController extends Controller
 
     /**
      * 🔹 Create VA 
+     * 🔹 With Image 
      */
     public function store(Request $request)
     {
@@ -115,6 +117,8 @@ class VirtualAccountController extends Controller
                 'update_flag'   => 'N',
             ]);
 
+            $imageService = new ImageService();
+            $imageService->generateVaImage($order_id, $result['va_number']);
             return redirect()->route('va.index')->with('success', 'VA berhasil dibuat di Espay Sandbox.');
         } catch (\Throwable $th) {
             Log::error('Espay SendInvoice Error', ['error' => $th->getMessage()]);

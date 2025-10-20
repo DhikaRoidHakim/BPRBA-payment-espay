@@ -59,7 +59,7 @@
                     class="w-9 h-9 rounded-full" alt="avatar">
                 <div class="hidden md:flex flex-col text-left">
                     <span class="text-sm font-semibold text-gray-800">{{ Auth::user()->name }}</span>
-                    <span class="text-xs text-gray-500">{{ Auth::user()->role }}</span>
+                    <span class="text-xs text-gray-500">{{ ucfirst(Auth::user()->role) }}</span>
                 </div>
                 <span class="material-symbols-outlined text-gray-500">expand_more</span>
             </button>
