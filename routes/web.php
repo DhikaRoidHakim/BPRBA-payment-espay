@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EspayController;
@@ -25,8 +26,11 @@ Route::middleware('auth')->group(function () {
     // Route Transaksi
     Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('transactions/{id}', [TransactionController::class, 'show'])->name('transactions.show');
-    
-    // API untuk fetch notification details (lebih aman dari broadcast)
+
+    //Route Activities Log
+    Route::get('activities-log', [ActivityController::class, 'index'])->name('activities-log.index');
+
+    // API untuk fetch notification details
     Route::get('api/notifications/latest', function () {
         return response()->json([
             'unread_count' => auth()->user()->unreadNotifications->count(),
@@ -42,24 +46,6 @@ Route::middleware('auth')->group(function () {
 
     // Route Logout
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
-    
-    // Testing Notification
-    Route::get('/test-notification', function () {
-        $user = auth()->user();
-        $transaction = new \App\Models\Transaction([
-            'trx_id' => 'TEST-' . time(),
-            'va_number' => '1234567890',
-            'paid_amount' => 100000,
-        ]);
-        
-        $user->notify(new \App\Notifications\PaymentReceivedNotification($transaction));
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Notification sent to user ID: ' . $user->id,
-            'channel' => 'App.Models.User.' . $user->id
-        ]);
-    })->name('test.notification');
 });
 
 

@@ -7,6 +7,7 @@ use App\Models\EspayVirtualAccount;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Services\ImageService;
 
@@ -117,6 +118,14 @@ class VirtualAccountController extends Controller
                 'update_flag'   => 'N',
             ]);
 
+            // Log Activity
+            activity('create-va')
+                ->performedOn($va)
+                ->causedBy(Auth::user())
+                ->withProperties(['order_id' => $order_id, 'va_number' => $result['va_number']])
+                ->log('VA berhasil dibuat di Espay Sandbox.');
+
+            // Generate Image
             $imageService = new ImageService();
             $imageService->generateVaImage($order_id, $result['va_number']);
             return redirect()->route('va.index')->with('success', 'VA berhasil dibuat di Espay Sandbox.');

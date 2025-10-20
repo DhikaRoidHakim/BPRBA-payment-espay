@@ -27,14 +27,6 @@
                     <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
                         :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Dashboard</span>
                 </a>
-
-                <a href="{{ url('/transactions') }}"
-                    class="flex items-center gap-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition overflow-hidden"
-                    :class="sidebarOpen ? 'px-3 py-2.5' : 'px-3 py-3 justify-center'">
-                    <span class="material-symbols-outlined text-xl flex-shrink-0">price_check</span>
-                    <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
-                        :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Transactions</span>
-                </a>
             </div>
         </div>
 
@@ -52,13 +44,29 @@
                     <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
                         :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Virtual Account</span>
                 </a>
-
-                <a href="{{ url('/settings') }}"
+                <a href="{{ url('/transactions') }}"
                     class="flex items-center gap-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition overflow-hidden"
                     :class="sidebarOpen ? 'px-3 py-2.5' : 'px-3 py-3 justify-center'">
-                    <span class="material-symbols-outlined text-xl flex-shrink-0">settings</span>
+                    <span class="material-symbols-outlined text-xl flex-shrink-0">price_check</span>
                     <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
-                        :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Settings</span>
+                        :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Transactions</span>
+                </a>
+            </div>
+        </div>
+
+        {{-- Log Section --}}
+        <div>
+            <div class="mb-3 overflow-hidden" :class="sidebarOpen ? 'px-3' : 'px-0'">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap transition-all duration-300"
+                    :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Data Log</h3>
+            </div>
+            <div class="space-y-1">
+                <a href="{{ url('/activities-log') }}"
+                    class="flex items-center gap-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition overflow-hidden"
+                    :class="sidebarOpen ? 'px-3 py-2.5' : 'px-3 py-3 justify-center'">
+                    <span class="material-symbols-outlined text-xl flex-shrink-0">search_activity</span>
+                    <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
+                        :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Activities Log</span>
                 </a>
             </div>
         </div>
