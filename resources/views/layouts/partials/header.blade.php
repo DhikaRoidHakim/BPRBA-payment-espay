@@ -1,13 +1,7 @@
 <header
     class="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-4 md:px-6 relative z-30">
     <div class="flex items-center gap-3">
-        <button type="button" @click="sidebarOpen = !sidebarOpen"
-            class="p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            aria-label="Toggle sidebar">
-            <span class="material-symbols-outlined text-2xl">menu</span>
-        </button>
-
-        <h2 class="text-base font-semibold text-gray-800">@yield('page-title', 'Dashboard')</h2>
+        <h2 class="ml-1 text-base font-semibold text-gray-800">@yield('page-title', 'Dashboard')</h2>
     </div>
 
     <div class="flex items-center gap-4">

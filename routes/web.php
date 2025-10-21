@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
 
     //Route Activities Log
     Route::get('activities-log', [ActivityController::class, 'index'])->name('activities-log.index');
+    Route::get('activities-auth', [ActivityController::class, 'authLog'])->name('activities-auth.index');
 
     // API untuk fetch notification details
     Route::get('api/notifications/latest', function () {
