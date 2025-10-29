@@ -32,9 +32,9 @@
                     <a href="{{ url('/') }}"
                         class="flex items-center gap-3 rounded-lg transition overflow-hidden group"
                         :class="[
-                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
-                                                                            request()->is('/') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
-                                                                        ]">
+                                                                                                                                                                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
+                                                                                                                                                                                                                            request()->is('/') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                                                                                                                                                                                                        ]">
                         <span
                             class="material-symbols-outlined text-xl flex-shrink-0 group-hover:scale-110 transition">dashboard</span>
                         <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
@@ -56,13 +56,25 @@
                     <a href="{{ url('/va') }}"
                         class="flex items-center gap-3 rounded-lg transition overflow-hidden group"
                         :class="[
-                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
-                                                                            request()->is('va*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
-                                                                        ]">
+                                                    sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
+                                                    request()->is('va*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                                ]">
                         <span
                             class="material-symbols-outlined text-xl flex-shrink-0 group-hover:scale-110 transition">credit_score</span>
                         <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
                             :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Virtual Account</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center gap-3 rounded-lg transition overflow-hidden group"
+                        :class="[
+                                                                                                                                                                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
+                                                                                                                                                                                                                            request()->is('va*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                                                                                                                                                                                                        ]">
+                        <span
+                            class="material-symbols-outlined text-xl flex-shrink-0 group-hover:scale-110 transition">wallet</span>
+                        <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
+                            :class="sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'">Tabungan</span>
                     </a>
                 </li>
 
@@ -70,9 +82,9 @@
                     <a href="{{ url('/transactions') }}"
                         class="flex items-center gap-3 rounded-lg transition overflow-hidden group"
                         :class="[
-                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
-                                                                            request()->is('transactions*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
-                                                                        ]">
+                                                                                                                                                                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
+                                                                                                                                                                                                                            request()->is('transactions*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                                                                                                                                                                                                        ]">
                         <span
                             class="material-symbols-outlined text-xl flex-shrink-0 group-hover:scale-110 transition">price_check</span>
                         <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
@@ -94,9 +106,9 @@
                     <a href="{{ url('/activities-log') }}"
                         class="flex items-center gap-3 rounded-lg transition overflow-hidden group"
                         :class="[
-                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
-                                                                            request()->is('activities-log*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
-                                                                        ]">
+                                                                                                                                                                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
+                                                                                                                                                                                                                            request()->is('activities-log*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                                                                                                                                                                                                        ]">
                         <span
                             class="material-symbols-outlined text-xl flex-shrink-0 group-hover:scale-110 transition">search_activity</span>
                         <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"
@@ -108,9 +120,9 @@
                     <a href="{{ url('/activities-auth') }}"
                         class="flex items-center gap-3 rounded-lg transition overflow-hidden group"
                         :class="[
-                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
-                                                                            request()->is('activities-auth*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
-                                                                        ]">
+                                                                                                                                                                                                                            sidebarOpen ? 'px-4 py-3' : 'px-3 py-3 justify-center',
+                                                                                                                                                                                                                            request()->is('activities-auth*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                                                                                                                                                                                                                        ]">
                         <span
                             class="material-symbols-outlined text-xl flex-shrink-0 group-hover:scale-110 transition">monitor_heart</span>
                         <span class="text-sm font-medium whitespace-nowrap transition-all duration-300"

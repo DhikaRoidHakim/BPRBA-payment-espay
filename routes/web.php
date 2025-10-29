@@ -7,6 +7,7 @@ use App\Http\Controllers\EspayController;
 use App\Http\Controllers\VirtualAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\TelegramController;
 
 
 
@@ -14,6 +15,7 @@ Route::middleware('guest')->group(function () {
     // Route Login
     Route::get('login', [AuthController::class, 'showFromLogin'])->name('login');
     Route::post('login', [AuthController::class, 'login'])->name('login.process');
+    Route::post('/telegram/webhook', [TelegramController::class, 'handle'])->name('telegram.webhook')->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
 });
 
 
@@ -47,6 +49,13 @@ Route::middleware('auth')->group(function () {
 
     // Route Logout
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+});
+
+
+Route::post('/va/mass-update', [VirtualAccountController::class, 'massUpdate'])->name('va.massUpdate');
+Route::get('/batch-status/{id}', function ($id) {
+    $batch = Bus::findBatch($id);
+    return ['finished' => $batch->finished(), 'progress' => $batch->progress()];
 });
 
 

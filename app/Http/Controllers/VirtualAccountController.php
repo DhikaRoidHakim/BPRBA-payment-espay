@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Services\ImageService;
+use Illuminate\Support\Facades\Bus; 
+use App\Jobs\UpdateVaExpiredJob;
 
 class VirtualAccountController extends Controller
 {
@@ -311,5 +313,21 @@ class VirtualAccountController extends Controller
             Log::error('Espay DeleteInvoice Error', ['error' => $th->getMessage()]);
             return back()->with('error', 'Terjadi kesalahan saat delete: ' . $th->getMessage());
         }
+    }
+
+    /**
+     * 🔹 Mass Update VA Expired
+     */
+    public function massUpdate(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+
+        $batch = Bus::batch([])->name('Mass Update VA')->dispatch();
+
+        foreach ($request->ids as $id) {
+            $batch->add(new UpdateVaExpiredJob($id));
+        }
+
+        return response()->json(['batch_id' => $batch->id]);
     }
 }
