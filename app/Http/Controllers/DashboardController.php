@@ -12,20 +12,38 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Total pembayaran sukses (PAID)
-        $totalPaid = Transaction::where('status', 'PAID')->sum('paid_amount');
+        return view('dashboard', [
+            'totalPaid' => $this->getTotalPaid(),
+            'totalFailed' => $this->getTotalFailed(),
+            'totalPending' => $this->getTotalPending(),
+            'totalTransaction' => $this->getTotalTransactions(),
+            'dailyPayments' => $this->getDailyPayments(),
+        ]);
+    }
 
-        // Total transaksi gagal
-        $totalFailed = Transaction::where('status', 'FAILED')->count();
+    private function getTotalPaid()
+    {
+        return Transaction::where('status', 'PAID')->sum('paid_amount');
+    }
 
-        // Total transaksi pending
-        $totalPending = Transaction::where('status', 'PENDING')->count();
+    private function getTotalFailed()
+    {
+        return Transaction::where('status', 'FAILED')->count();
+    }
 
-        // Jumlah transaksi keseluruhan
-        $totalTransaction = Transaction::count();
+    private function getTotalPending()
+    {
+        return Transaction::where('status', 'PENDING')->count();
+    }
 
-        // Statistik per hari (misal untuk grafik line chart)
-        $dailyPayments = Transaction::select(
+    private function getTotalTransactions()
+    {
+        return Transaction::count();
+    }
+
+    private function getDailyPayments()
+    {
+        return Transaction::select(
             DB::raw('DATE(paid_at) as date'),
             DB::raw('SUM(paid_amount) as total')
         )
@@ -34,13 +52,6 @@ class DashboardController extends Controller
             ->orderBy('date', 'desc')
             ->limit(7)
             ->get();
-
-        return view('dashboard', compact(
-            'totalPaid',
-            'totalFailed',
-            'totalPending',
-            'totalTransaction',
-            'dailyPayments'
-        ));
     }
 }
+

@@ -95,6 +95,8 @@ class VirtualAccountController extends Controller
             }
 
             $result = $response->json();
+            //LOG respone code
+            Log::info('[ESPAY RESPONSE CODE - CREATE]', ['code' => $response->status()]);
             Log::info('[ESPAY RESPONSE - CREATE]', $result);
 
             $va = EspayVirtualAccount::create([
@@ -249,6 +251,7 @@ class VirtualAccountController extends Controller
     public function destroy($id)
     {
         Log::info('[ESPAY DELETE - START]');
+
         $va = EspayVirtualAccount::findOrFail($id);
 
         $partnerServiceId = "ESPAY";
@@ -256,25 +259,25 @@ class VirtualAccountController extends Controller
         $virtualAccountNo = $va->order_id;
 
         $timestamp = now()->toIso8601String();
-
         $prefix = Carbon::today()->format('Ymd');
         $randomNumber = mt_rand(10000, 99999);
-
         $xExternalId = $prefix . $randomNumber;
 
         $body = [
-            'partnerServiceId' => $partnerServiceId,
-            'customerNo' => $customerNo,
-            'virtualAccountNo' => $virtualAccountNo,
+            'partnerServiceId'   => $partnerServiceId,
+            'customerNo'         => $customerNo,
+            'virtualAccountNo'   => $virtualAccountNo,
         ];
 
         try {
+            // 🔹 Encode body + hash buat signing
             $minifiedBody = json_encode($body, JSON_UNESCAPED_SLASHES);
             $hashedBody = hash('sha256', $minifiedBody);
             $method = 'DELETE';
             $relativeUrl = '/apimerchant/v1.0/transfer-va/delete-va';
             $stringToSign = "{$method}:{$relativeUrl}:{$hashedBody}:{$timestamp}";
 
+            // 🔹 Load private key
             $privateKeyPath = storage_path('app/private.pem');
             $privateKey = openssl_pkey_get_private(file_get_contents($privateKeyPath));
 
@@ -285,35 +288,56 @@ class VirtualAccountController extends Controller
             openssl_sign($stringToSign, $binarySignature, $privateKey, OPENSSL_ALGO_SHA256);
             $xSignature = base64_encode($binarySignature);
 
-            Log::info('[ESPAY SIGNATURE KEY]', ['signature' => $xSignature]);
+            // 🔹 Log request
+            Log::info('[ESPAY DELETE - REQUEST]', [
+                'url' => 'https://sandbox-api.espay.id/apimerchant/v1.0/transfer-va/delete-va',
+                'method' => $method,
+                'headers' => [
+                    'Content-Type'  => 'application/json',
+                    'X-TIMESTAMP'   => $timestamp,
+                    'X-SIGNATURE'   => $xSignature,
+                    'X-EXTERNAL-ID' => $xExternalId,
+                    'X-PARTNER-ID'  => $customerNo,
+                    'CHANNEL-ID'    => $partnerServiceId,
+                ],
+                'body' => $body,
+                'string_to_sign' => $stringToSign,
+            ]);
 
+            // 🔹 Eksekusi request
             $response = Http::withHeaders([
                 'Content-Type'   => 'application/json',
                 'X-TIMESTAMP'    => $timestamp,
                 'X-SIGNATURE'    => $xSignature,
                 'X-EXTERNAL-ID'  => $xExternalId,
-                'X-PARTNER-ID' => $customerNo,
-                'CHANNEL-ID' => $partnerServiceId,
+                'X-PARTNER-ID'   => $customerNo,
+                'CHANNEL-ID'     => $partnerServiceId,
             ])->delete('https://sandbox-api.espay.id/apimerchant/v1.0/transfer-va/delete-va', $body);
 
-
-            // dd($response->body(), $timestamp, $xSignature, $xExternalId, $partnerServiceId, $customerNo, $virtualAccountNo, $minifiedBody, $stringToSign);
-            Log::info('[ESPAY RESPONSE - DELETE]');
-            Log::info($response->body());
+            // 🔹 Log response
+            Log::info('[ESPAY DELETE - RESPONSE]', [
+                'status' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->json() ?? $response->body(),
+            ]);
 
             if ($response->failed()) {
-                Log::error('Espay DeleteInvoice Error', ['body' => $response->body()]);
+                Log::error('[ESPAY DELETE - FAILED]', ['body' => $response->body()]);
                 return back()->with('error', 'Gagal menghapus VA di Espay: ' . $response->body());
             }
 
+            // 🔹 Hapus dari DB kalau sukses
             $va->delete();
+
+            Log::info('[ESPAY DELETE - SUCCESS]', ['va_id' => $id]);
 
             return redirect()->route('va.index')->with('success', 'Virtual Account berhasil dihapus di Espay Sandbox.');
         } catch (\Throwable $th) {
-            Log::error('Espay DeleteInvoice Error', ['error' => $th->getMessage()]);
+            Log::error('[ESPAY DELETE - ERROR]', ['error' => $th->getMessage()]);
             return back()->with('error', 'Terjadi kesalahan saat delete: ' . $th->getMessage());
         }
     }
+
 
     /**
      * 🔹 Mass Update VA Expired

@@ -168,7 +168,6 @@
                         ids: selected
                     },
                     success: function(res) {
-                        // Polling status batch
                         checkBatchStatus(res.batch_id);
                     },
                     error: function() {
@@ -177,7 +176,7 @@
                 });
             });
 
-            // ✅ Cek status batch tiap 2 detik
+           
             function checkBatchStatus(batchId) {
                 const interval = setInterval(() => {
                     $.get(`/batch-status/${batchId}`, function(res) {
