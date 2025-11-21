@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\PaymentReceivedNotification;
+use App\Models\User;
 
 class EspayController extends Controller
 {
@@ -59,6 +61,12 @@ class EspayController extends Controller
             ]
         );
 
+
+        // Mengirimkan Notifikasi Ke admin
+        $admin = User::where('role', 'admin')->first();
+        if ($admin) {
+            $admin->notify(new PaymentReceivedNotification($transaction));
+        }
         Log::info("Transaction saved/updated successfully", ['trx_id' => $trxId]);
 
         $response = [
@@ -79,6 +87,9 @@ class EspayController extends Controller
             ],
         ];
 
+        // Log Response
+        Log::info('=== [ESPAY Response Payment] ===');
+        Log::info('Payload:', $response);
         return response()->json($response, 200);
     }
 

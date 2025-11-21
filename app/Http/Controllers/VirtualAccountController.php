@@ -7,7 +7,11 @@ use App\Models\EspayVirtualAccount;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Services\ImageService;
+use Illuminate\Support\Facades\Bus;
+use App\Jobs\UpdateVaExpiredJob;
 
 class VirtualAccountController extends Controller
 {
@@ -30,6 +34,7 @@ class VirtualAccountController extends Controller
 
     /**
      * 🔹 Create VA 
+     * 🔹 With Image 
      */
     public function store(Request $request)
     {
@@ -90,6 +95,8 @@ class VirtualAccountController extends Controller
             }
 
             $result = $response->json();
+            //LOG respone code
+            Log::info('[ESPAY RESPONSE CODE - CREATE]', ['code' => $response->status()]);
             Log::info('[ESPAY RESPONSE - CREATE]', $result);
 
             $va = EspayVirtualAccount::create([
@@ -115,6 +122,16 @@ class VirtualAccountController extends Controller
                 'update_flag'   => 'N',
             ]);
 
+            // Log Activity
+            activity('create-va')
+                ->performedOn($va)
+                ->causedBy(Auth::user())
+                ->withProperties(['order_id' => $order_id, 'va_number' => $result['va_number']])
+                ->log('VA berhasil dibuat di Espay Sandbox.');
+
+            // Generate Image
+            $imageService = new ImageService();
+            $imageService->generateVaImage($order_id, $result['va_number']);
             return redirect()->route('va.index')->with('success', 'VA berhasil dibuat di Espay Sandbox.');
         } catch (\Throwable $th) {
             Log::error('Espay SendInvoice Error', ['error' => $th->getMessage()]);
@@ -136,7 +153,6 @@ class VirtualAccountController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // TODO: Testing Update VA Espay
         try {
             $validated = $request->validate([
                 'remark1'    => 'nullable|string|max:255',
@@ -152,6 +168,7 @@ class VirtualAccountController extends Controller
             $rq_datetime  = now()->format('Y-m-d H:i:s');
             $signatureKey = config('espay.signature_key', '');
             $action       = 'SENDINVOICE';
+
 
             $order_id   = $va->order_id;
             $ccy        = $va->ccy ?? 'IDR';
@@ -187,11 +204,19 @@ class VirtualAccountController extends Controller
             Log::info('[ESPAY REQUEST - UPDATE]', $payload);
 
             // $response = Http::asForm()->post('https://sandbox-api.espay.id/rest/merchantpg/sendinvoice', $payload);
+
+            // Production
+            $createVAUrl = 'https://api.espay.id/rest/merchantpg/sendinvoice';
+
+            // Sandbox
+            // $createVAUrlSanbox = 'https://sandbox-api.espay.id/rest/merchantpg/sendinvoice';
+
             $response = Http::withHeaders([
                 'Content-Type' => 'application/x-www-form-urlencoded',
-            ])->send('POST', 'https://sandbox-api.espay.id/rest/merchantpg/sendinvoice', [
+            ])->send('POST', $createVAUrl, [
                 'body' => http_build_query($payload, '', '&', PHP_QUERY_RFC3986),
             ]);
+
             if ($response->failed()) {
                 Log::error('[ESPAY UPDATE ERROR]', ['body' => $response->body()]);
                 return back()->with('error', 'Gagal mengupdate VA di Espay Sandbox.');
@@ -234,6 +259,7 @@ class VirtualAccountController extends Controller
     public function destroy($id)
     {
         Log::info('[ESPAY DELETE - START]');
+
         $va = EspayVirtualAccount::findOrFail($id);
 
         $partnerServiceId = "ESPAY";
@@ -241,25 +267,25 @@ class VirtualAccountController extends Controller
         $virtualAccountNo = $va->order_id;
 
         $timestamp = now()->toIso8601String();
-
         $prefix = Carbon::today()->format('Ymd');
         $randomNumber = mt_rand(10000, 99999);
-
         $xExternalId = $prefix . $randomNumber;
 
         $body = [
-            'partnerServiceId' => $partnerServiceId,
-            'customerNo' => $customerNo,
-            'virtualAccountNo' => $virtualAccountNo,
+            'partnerServiceId'   => $partnerServiceId,
+            'customerNo'         => $customerNo,
+            'virtualAccountNo'   => $virtualAccountNo,
         ];
 
         try {
+            // 🔹 Encode body + hash buat signing
             $minifiedBody = json_encode($body, JSON_UNESCAPED_SLASHES);
             $hashedBody = hash('sha256', $minifiedBody);
             $method = 'DELETE';
             $relativeUrl = '/apimerchant/v1.0/transfer-va/delete-va';
             $stringToSign = "{$method}:{$relativeUrl}:{$hashedBody}:{$timestamp}";
 
+            // 🔹 Load private key
             $privateKeyPath = storage_path('app/private.pem');
             $privateKey = openssl_pkey_get_private(file_get_contents($privateKeyPath));
 
@@ -270,33 +296,70 @@ class VirtualAccountController extends Controller
             openssl_sign($stringToSign, $binarySignature, $privateKey, OPENSSL_ALGO_SHA256);
             $xSignature = base64_encode($binarySignature);
 
-            Log::info('[ESPAY SIGNATURE KEY]', ['signature' => $xSignature]);
+            // 🔹 Log request
+            Log::info('[ESPAY DELETE - REQUEST]', [
+                'url' => 'https://sandbox-api.espay.id/apimerchant/v1.0/transfer-va/delete-va',
+                'method' => $method,
+                'headers' => [
+                    'Content-Type'  => 'application/json',
+                    'X-TIMESTAMP'   => $timestamp,
+                    'X-SIGNATURE'   => $xSignature,
+                    'X-EXTERNAL-ID' => $xExternalId,
+                    'X-PARTNER-ID'  => $customerNo,
+                    'CHANNEL-ID'    => $partnerServiceId,
+                ],
+                'body' => $body,
+                'string_to_sign' => $stringToSign,
+            ]);
 
+            // 🔹 Eksekusi request
             $response = Http::withHeaders([
                 'Content-Type'   => 'application/json',
                 'X-TIMESTAMP'    => $timestamp,
                 'X-SIGNATURE'    => $xSignature,
                 'X-EXTERNAL-ID'  => $xExternalId,
-                'X-PARTNER-ID' => $customerNo,
-                'CHANNEL-ID' => $partnerServiceId,
+                'X-PARTNER-ID'   => $customerNo,
+                'CHANNEL-ID'     => $partnerServiceId,
             ])->delete('https://sandbox-api.espay.id/apimerchant/v1.0/transfer-va/delete-va', $body);
 
-
-            // dd($response->body(), $timestamp, $xSignature, $xExternalId, $partnerServiceId, $customerNo, $virtualAccountNo, $minifiedBody, $stringToSign);
-            Log::info('[ESPAY RESPONSE - DELETE]');
-            Log::info($response->body());
+            // 🔹 Log response
+            Log::info('[ESPAY DELETE - RESPONSE]', [
+                'status' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->json() ?? $response->body(),
+            ]);
 
             if ($response->failed()) {
-                Log::error('Espay DeleteInvoice Error', ['body' => $response->body()]);
+                Log::error('[ESPAY DELETE - FAILED]', ['body' => $response->body()]);
                 return back()->with('error', 'Gagal menghapus VA di Espay: ' . $response->body());
             }
 
+            // 🔹 Hapus dari DB kalau sukses
             $va->delete();
+
+            Log::info('[ESPAY DELETE - SUCCESS]', ['va_id' => $id]);
 
             return redirect()->route('va.index')->with('success', 'Virtual Account berhasil dihapus di Espay Sandbox.');
         } catch (\Throwable $th) {
-            Log::error('Espay DeleteInvoice Error', ['error' => $th->getMessage()]);
+            Log::error('[ESPAY DELETE - ERROR]', ['error' => $th->getMessage()]);
             return back()->with('error', 'Terjadi kesalahan saat delete: ' . $th->getMessage());
         }
+    }
+
+
+    /**
+     * 🔹 Mass Update VA Expired
+     */
+    public function massUpdate(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+
+        $batch = Bus::batch([])->name('Mass Update VA')->dispatch();
+
+        foreach ($request->ids as $id) {
+            $batch->add(new UpdateVaExpiredJob($id));
+        }
+
+        return response()->json(['batch_id' => $batch->id]);
     }
 }

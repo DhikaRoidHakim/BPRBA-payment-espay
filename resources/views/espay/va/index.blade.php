@@ -12,11 +12,20 @@
                 Virtual Account List
             </h3>
 
-            <a href="{{ route('va.create') }}"
-                class="bg-blue-600 text-white flex items-center px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                <span class="material-symbols-outlined text-sm mr-1">add</span>
-                Tambah VA
-            </a>
+            <div class="flex items-center space-x-2">
+                {{-- 🔄 Tombol Update Expired --}}
+                <button id="updateAllBtn"
+                    class="bg-green-600 text-white flex items-center px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                    <span class="material-symbols-outlined text-sm mr-1">update</span>
+                    Update Expired
+                </button>
+
+                <a href="{{ route('va.create') }}"
+                    class="bg-blue-600 text-white flex items-center px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    <span class="material-symbols-outlined text-sm mr-1">add</span>
+                    Tambah VA
+                </a>
+            </div>
         </div>
 
         {{-- Table --}}
@@ -24,6 +33,9 @@
             <table id="vaTable" class="min-w-full text-sm text-gray-700 border border-gray-100 rounded-lg">
                 <thead>
                     <tr class="bg-gray-50 text-left uppercase text-xs font-semibold tracking-wider text-gray-500">
+                        <th class="py-3 px-4 text-center">
+                            <input type="checkbox" id="selectAll" class="cursor-pointer">
+                        </th>
                         <th class="py-3 px-4">Order ID</th>
                         <th class="py-3 px-4">VA Number</th>
                         <th class="py-3 px-4">Bank</th>
@@ -36,6 +48,12 @@
                 <tbody>
                     @foreach ($va as $data)
                         <tr class="border-b hover:bg-gray-50 transition">
+                            {{-- ✅ Checkbox per baris --}}
+                            <td class="py-2 px-4 text-center">
+                                <input type="checkbox" name="selected[]" value="{{ $data->id }}"
+                                    class="rowCheckbox cursor-pointer">
+                            </td>
+
                             <td class="py-2 px-4 font-medium text-gray-800">{{ $data->order_id }}</td>
                             <td class="py-2 px-4 text-gray-800 font-medium">{{ $data->va_number ?? '-' }}</td>
                             <td class="py-2 px-4">{{ $data->bank_code == '013' ? 'Bank Permata' : '-' }}</td>
@@ -90,13 +108,17 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.tailwindcss.min.js"></script>
 
+    {{-- ✅ SweetAlert --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         $(document).ready(function() {
+            // ✅ Init DataTable
             setTimeout(() => {
                 $('#vaTable').DataTable({
                     responsive: true,
                     order: [
-                        [5, 'desc']
+                        [6, 'desc']
                     ],
                     pageLength: 10,
                     language: {
@@ -112,6 +134,61 @@
                     }
                 });
             }, 200);
+
+            // ✅ Checkbox Select All
+            $('#selectAll').on('change', function() {
+                $('.rowCheckbox').prop('checked', this.checked);
+            });
+
+            // ✅ Klik tombol Update Expired
+            $('#updateAllBtn').click(function() {
+                const selected = $('.rowCheckbox:checked').map(function() {
+                    return $(this).val();
+                }).get();
+
+                if (selected.length === 0) {
+                    Swal.fire('Perhatian', 'Pilih minimal satu VA untuk diupdate!', 'warning');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Mengupdate Virtual Account...',
+                    text: 'Mohon tunggu, proses sedang berjalan.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: "{{ route('va.massUpdate') }}",
+                    method: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        ids: selected
+                    },
+                    success: function(res) {
+                        checkBatchStatus(res.batch_id);
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Gagal memulai proses update.', 'error');
+                    }
+                });
+            });
+
+           
+            function checkBatchStatus(batchId) {
+                const interval = setInterval(() => {
+                    $.get(`/batch-status/${batchId}`, function(res) {
+                        if (res.finished) {
+                            clearInterval(interval);
+                            Swal.fire('Selesai ✅', 'Semua Virtual Account berhasil diperbarui.', 'success').then(() => {
+                                location.reload();
+                            });
+                        }
+                    });
+                }, 2000);
+            }
         });
     </script>
 @endsection

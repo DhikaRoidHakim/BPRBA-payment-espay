@@ -1,33 +1,59 @@
 <header
     class="h-16 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-4 md:px-6 relative z-30">
     <div class="flex items-center gap-3">
-        <!-- burger: type="button", high z to ensure clickable -->
-        <button type="button"
-            @click="sidebarOpen = !sidebarOpen; console.log('Burger clicked, sidebarOpen:', sidebarOpen)"
-            class="p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            aria-label="Toggle sidebar">
-            <span class="material-symbols-outlined text-2xl">menu</span>
-        </button>
-
-        <h2 class="text-base font-semibold text-gray-800">@yield('page-title', 'Dashboard')</h2>
+        <h2 class="ml-1 text-base font-semibold text-gray-800">@yield('page-title', 'Dashboard')</h2>
     </div>
 
     <div class="flex items-center gap-4">
-        {{-- search / actions area (placeholder) --}}
         <div class="hidden sm:block">
             <input type="search" placeholder="Search..."
                 class="px-3 py-2 border rounded-lg text-sm focus:ring-1 focus:ring-blue-300" />
         </div>
 
-        {{-- user dropdown handled here for desktop --}}
+
+        <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" id="notifBtn" class="relative">
+                <span class="material-symbols-outlined">notifications</span>
+                <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full text-xs px-1">
+                    {{ auth()->user()->unreadNotifications->count() }}
+                </span>
+            </button>
+
+            <div x-show="open" @click.outside="open = false"
+                class="absolute right-0 mt-2 w-96 bg-white border rounded shadow-lg z-50">
+                <div id="notifList">
+                    @forelse (auth()->user()->unreadNotifications->take(10) as $n)
+                        <a href="#" class="block px-4 py-3 border-b hover:bg-gray-50">
+                            <div class="text-sm">{{ $n->data['message'] }} <strong>{{ $n->data['trx_id'] }}</strong>
+                            </div>
+                            <div class="text-xs text-gray-400">{{ $n->created_at->diffForHumans() }}</div>
+                        </a>
+                    @empty
+                        <div class="px-4 py-6 text-center text-gray-500 text-sm">
+                            Tidak ada notifikasi baru
+                        </div>
+                    @endforelse
+                </div>
+                @if (auth()->user()->unreadNotifications->count() > 0)
+                    <div class="p-2 text-center border-t">
+                        <form method="POST" action="{{ route('notifications.read') }}">@csrf
+                            <button class="text-sm text-blue-600 hover:text-blue-800">Mark all as read</button>
+                        </form>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+
+
         <div class="relative" x-data="{ openUser: false }">
             <button type="button" @click="openUser = !openUser" class="flex items-center gap-3 focus:outline-none"
                 aria-expanded="false">
-                <img src="https://ui-avatars.com/api/?name=Dhika+Roid+Hakim&background=2563eb&color=fff"
+                <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=2563eb&color=fff"
                     class="w-9 h-9 rounded-full" alt="avatar">
                 <div class="hidden md:flex flex-col text-left">
-                    <span class="text-sm font-semibold text-gray-800">Dhika Roid Hakim</span>
-                    <span class="text-xs text-gray-500">Administrator</span>
+                    <span class="text-sm font-semibold text-gray-800">{{ Auth::user()->name }}</span>
+                    <span class="text-xs text-gray-500">{{ ucfirst(Auth::user()->role) }}</span>
                 </div>
                 <span class="material-symbols-outlined text-gray-500">expand_more</span>
             </button>
