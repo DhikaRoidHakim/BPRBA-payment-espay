@@ -26,7 +26,7 @@
                     <label class="block text-sm font-medium text-gray-700">Comm Code</label>
                     <input type="text" name="comm_code" value="SGWBPRB"
                         class="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        readonly>
+                        value="{{ old('comm_code') }}">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Bank Code</label>
