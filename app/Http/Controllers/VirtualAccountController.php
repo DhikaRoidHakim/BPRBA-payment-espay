@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Services\ImageService;
-use Illuminate\Support\Facades\Bus; 
+use Illuminate\Support\Facades\Bus;
 use App\Jobs\UpdateVaExpiredJob;
 
 class VirtualAccountController extends Controller
@@ -204,11 +204,19 @@ class VirtualAccountController extends Controller
             Log::info('[ESPAY REQUEST - UPDATE]', $payload);
 
             // $response = Http::asForm()->post('https://sandbox-api.espay.id/rest/merchantpg/sendinvoice', $payload);
+
+            // Production
+            $createVAUrl = 'https://api.espay.id/rest/merchantpg/sendinvoice';
+
+            // Sandbox
+            // $createVAUrlSanbox = 'https://sandbox-api.espay.id/rest/merchantpg/sendinvoice';
+
             $response = Http::withHeaders([
                 'Content-Type' => 'application/x-www-form-urlencoded',
-            ])->send('POST', 'https://sandbox-api.espay.id/rest/merchantpg/sendinvoice', [
+            ])->send('POST', $createVAUrl, [
                 'body' => http_build_query($payload, '', '&', PHP_QUERY_RFC3986),
             ]);
+
             if ($response->failed()) {
                 Log::error('[ESPAY UPDATE ERROR]', ['body' => $response->body()]);
                 return back()->with('error', 'Gagal mengupdate VA di Espay Sandbox.');

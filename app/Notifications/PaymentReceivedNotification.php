@@ -51,13 +51,10 @@ class PaymentReceivedNotification extends Notification
      */
     public function toBroadcast($notifiable)
     {
-        // HANYA kirim data minimal untuk trigger refresh
-        // Jangan kirim data sensitif seperti amount, VA number, dll
         return new BroadcastMessage([
             'trx_id' => $this->transaction->trx_id,
             'message' => 'Pembayaran diterima',
             'type' => 'payment_received',
-            // Frontend akan fetch detail dari API Laravel
         ]);
     }
 }
